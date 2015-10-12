@@ -514,7 +514,7 @@
         }
 
         function initResults() {
-          scope.showDropdown = !scope.hideWhileSearching || !(scope.hideNoResults && scope.results.length === 0);
+          scope.showDropdown = !scope.hideWhileSearching || !(scope.hideNoResults && scope.results && scope.results.length === 0);
           scope.currentIndex = -1;
         }
 
