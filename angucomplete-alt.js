@@ -106,7 +106,9 @@
         hideWhileSearching: '=',
         highlightExactMatch: '=',
         hideTextSearching: '=',
-        hideNoResults: '='
+        hideNoResults: '=',
+        preventInvokeApply: '=',
+        preventCssComputation: '='
       },
       templateUrl: function(element, attrs) {
         return attrs.templateUrl || TEMPLATE_URL;
@@ -377,7 +379,7 @@
                 }
               });
 
-              if (isScrollOn) {
+              if (isScrollOn && !scope.preventCssComputation) {
                 row = dropdownRow();
                 if (dropdownHeight() < row.getBoundingClientRect().bottom) {
                   dropdownScrollTopTo(dropdownRowOffsetHeight(row));
@@ -394,7 +396,7 @@
                 }
               });
 
-              if (isScrollOn) {
+              if (isScrollOn && !scope.preventCssComputation) {
                 rowTop = dropdownRowTop();
                 if (rowTop < 0) {
                   dropdownScrollTopTo(rowTop - 1);
@@ -657,6 +659,11 @@
         };
 
         scope.hideResults = function(event) {
+          var invokeApply = true;
+          if (scope.preventInvokeApply) {
+            invokeApply = false;
+          }
+
           if (mousedownOn &&
               (mousedownOn === scope.id + '_dropdown' ||
                mousedownOn.indexOf('angucomplete') >= 0)) {
@@ -670,7 +677,7 @@
                   inputField.val(scope.searchStr);
                 }
               });
-            }, BLUR_TIMEOUT);
+            }, BLUR_TIMEOUT, invokeApply);
             cancelHttpRequest();
 
             if (scope.focusOut) {
@@ -720,8 +727,7 @@
             scope.searching = false;
             showAll();
           }
-          else{
-
+          else {
             initResults();
 
             if (searchTimer) {
@@ -729,10 +735,13 @@
             }
 
             scope.searching = true;
-
+            var invokeApply = true;
+            if (scope.preventInvokeApply) {
+              invokeApply = false;
+            }
             searchTimer = $timeout(function() {
               searchTimerComplete(scope.searchStr);
-            }, scope.pause);
+            }, scope.pause, invokeApply);
           }
 
           if (scope.inputChanged) {
@@ -810,12 +819,13 @@
         });
 
         // set isScrollOn
-        $timeout(function() {
-          var css = getComputedStyle(dd);
-          isScrollOn = css.maxHeight && css.overflowY === 'auto';
-        });
+        if (!scope.preventCssComputation) {
+          $timeout(function () {
+            var css = getComputedStyle(dd);
+            isScrollOn = css.maxHeight && css.overflowY === 'auto';
+          });
+        }
       }
     };
   }]);
-
 }));
