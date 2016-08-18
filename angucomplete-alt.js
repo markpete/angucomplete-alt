@@ -288,9 +288,13 @@
           else if (which === KEY_ES) {
             clearResults();
             if(inputExists) {
-              scope.$apply(function () {
+              if (scope.preventInvokeApply) {
                 inputField.val(scope.searchStr);
-              });
+              } else {
+                scope.$apply(function () {
+                  inputField.val(scope.searchStr);
+                });
+              }
             }
           }
           else {
@@ -303,9 +307,13 @@
             }
 
             if (validState && validState !== scope.searchStr && !scope.clearSelected) {
-              scope.$apply(function() {
+              if (scope.preventInvokeApply) {
                 callOrAssign();
-              });
+              } else {
+                scope.$apply(function() {
+                  callOrAssign();
+                });
+              }
             }
           }
         }
@@ -355,6 +363,27 @@
           }
         }
 
+        function keyboardDownArrowHandler() {
+          scope.currentIndex++;
+          if (inputExists) {
+            updateInputField();
+          }
+        }
+
+        function keyboardUpArrowHandler() {
+          scope.currentIndex--;
+          if (inputExists) {
+            updateInputField();
+          }
+        }
+
+        function keyboardUpArrowHandlerAtTop() {
+          scope.currentIndex = -1;
+          if (inputExists) {
+            inputField.val(scope.searchStr);
+          }
+        }
+
         function keydownHandler(event) {
           var which = ie8EventNormalizer(event);
           var row = null;
@@ -368,16 +397,19 @@
               handleOverrideSuggestions(event);
               clearResults();
             }
-            scope.$apply();
+            if (!scope.preventInvokeApply) {
+              scope.$apply();
+            }
           } else if (which === KEY_DW && scope.results) {
             event.preventDefault();
             if ((scope.currentIndex + 1) < scope.results.length && scope.showDropdown) {
-              scope.$apply(function() {
-                scope.currentIndex ++;
-                if(inputExists) {
-                  updateInputField();
-                }
-              });
+              if (scope.preventInvokeApply) {
+                 keyboardDownArrowHandler();
+              } else {
+                scope.$apply(function () {
+                  keyboardDownArrowHandler();
+                });
+              }
 
               if (isScrollOn && !scope.preventCssComputation) {
                 row = dropdownRow();
@@ -389,12 +421,13 @@
           } else if (which === KEY_UP && scope.results) {
             event.preventDefault();
             if (scope.currentIndex >= 1) {
-              scope.$apply(function() {
-                scope.currentIndex --;
-                if(inputExists) {
-                  updateInputField();
-                }
-              });
+              if (scope.preventInvokeApply) {
+                keyboardUpArrowHandler();
+              } else {
+                scope.$apply(function () {
+                  keyboardUpArrowHandler();
+                });
+              }
 
               if (isScrollOn && !scope.preventCssComputation) {
                 rowTop = dropdownRowTop();
@@ -404,12 +437,13 @@
               }
             }
             else if (scope.currentIndex === 0) {
-              scope.$apply(function() {
-                scope.currentIndex = -1;
-                if(inputExists) {
-                  inputField.val(scope.searchStr);
-                }
-              });
+              if (scope.preventInvokeApply) {
+                keyboardUpArrowHandlerAtTop();
+              } else {
+                scope.$apply(function () {
+                  keyboardUpArrowHandlerAtTop();
+                });
+              }
             }
           } else if (which === KEY_TAB) {
             if (scope.results && scope.results.length > 0 && scope.showDropdown) {
@@ -435,7 +469,7 @@
               }
             }
           }
-        }
+      }
 
         function httpSuccessCallbackGen(str) {
           return function(responseData, status, headers, config) {
@@ -561,9 +595,13 @@
             return;
           }
           if (scope.localData) {
-            scope.$apply(function() {
+            if (scope.preventInvokeApply) {
               getLocalResults(str);
-            });
+            } else {
+              scope.$apply(function() {
+                getLocalResults(str);
+              });  
+            } 
           }
           else if (scope.remoteApiHandler) {
             getRemoteResultsWithCustomHandler(str);
@@ -634,6 +672,10 @@
               scope.showDropdown = false;
             }
           }
+          if (scope.preventInvokeApply) {
+            scope.$digest();
+            
+          }
         }
 
         function showAll() {
@@ -672,11 +714,15 @@
           else {
             hideTimer = $timeout(function() {
               clearResults();
-              scope.$apply(function() {
                 if (scope.searchStr && scope.searchStr.length > 0) {
-                  inputField.val(scope.searchStr);
+                  if (scope.preventInvokeApply) {
+                    inputField.val(scope.searchStr);
+                  } else {
+                    scope.$apply(function() {
+                      inputField.val(scope.searchStr);
+                    });
+                  }
                 }
-              });
             }, BLUR_TIMEOUT, invokeApply);
             cancelHttpRequest();
 
