@@ -404,7 +404,7 @@
             event.preventDefault();
             if ((scope.currentIndex + 1) < scope.results.length && scope.showDropdown) {
               if (scope.preventInvokeApply) {
-                 keyboardDownArrowHandler();
+                keyboardDownArrowHandler();
               } else {
                 scope.$apply(function () {
                   keyboardDownArrowHandler();
@@ -469,7 +469,7 @@
               }
             }
           }
-      }
+        }
 
         function httpSuccessCallbackGen(str) {
           return function(responseData, status, headers, config) {
@@ -573,7 +573,7 @@
           }
 
           scope.searching = false;
-          processResults(matches, str);
+          return matches;
         }
 
         function checkExactMatch(result, obj, str){
@@ -595,13 +595,16 @@
             return;
           }
           if (scope.localData) {
+            var matches;
+            var searchFunc = (typeof scope.localSearch === 'function' ? scope.localSearch : getLocalResults);
             if (scope.preventInvokeApply) {
-              getLocalResults(str);
+              matches = searchFunc(str, scope.localData);
             } else {
               scope.$apply(function() {
-                getLocalResults(str);
-              });  
-            } 
+                matches = searchFunc(str, scope.localData);
+              });
+            }
+            processResults(matches, str);
           }
           else if (scope.remoteApiHandler) {
             getRemoteResultsWithCustomHandler(str);
@@ -714,15 +717,15 @@
           else {
             hideTimer = $timeout(function() {
               clearResults();
-                if (scope.searchStr && scope.searchStr.length > 0) {
-                  if (scope.preventInvokeApply) {
+              if (scope.searchStr && scope.searchStr.length > 0) {
+                if (scope.preventInvokeApply) {
+                  inputField.val(scope.searchStr);
+                } else {
+                  scope.$apply(function() {
                     inputField.val(scope.searchStr);
-                  } else {
-                    scope.$apply(function() {
-                      inputField.val(scope.searchStr);
-                    });
-                  }
+                  });
                 }
+              }
             }, BLUR_TIMEOUT, invokeApply);
             cancelHttpRequest();
 
